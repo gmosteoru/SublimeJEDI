@@ -65,18 +65,14 @@ class BaseLookUpJediCommand(JediEnvMixin):
         # If the file was selected from a drop down list
         if isinstance(filename, int):
             if filename == -1:  # cancelled
+                self.view = self.base_view
+                active_window.focus_view(self.view)
                 return
             filename, line_number, column_number = self.options_map[filename]
         active_window.open_file('%s:%s:%s' % (filename, line_number or 0,
                                 column_number or 0), sublime.ENCODED_POSITION)
 
     def _preview_jump_target(self, filename, line_number=None, column_number=None):
-        """ Opens a new window for preview and jumps to declaration if possible
-
-            :param filename: string or int
-            :param line_number: int
-            :param column_number: int
-        """
         active_window = self.view.window()
 
         filename, line_number, column_number = self.options_map[filename]
@@ -92,6 +88,7 @@ class BaseLookUpJediCommand(JediEnvMixin):
         """
         options = list(options)
         active_window = self.view.window()
+        self.base_view = self.view
 
         # Map the filenames to line and column numbers
         self.options_map = dict((i, (o.module_path, o.line, o.column))
