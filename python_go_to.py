@@ -53,6 +53,17 @@ def related_names(view):
 
 class BaseLookUpJediCommand(JediEnvMixin):
 
+    def _store_base_view_region(self):
+        self.base_view = self.view
+        self.pos = self.view.sel()[0]
+
+    def _restore_base_view_region(self, active_window):
+        self.view = self.base_view
+        active_window.focus_view(self.view)
+        self.view.sel().clear()
+        self.view.sel().add(self.pos)
+        self.view.show(self.pos)
+
     def _jump_to_in_window(self, filename, line_number=None, column_number=None):
         """ Opens a new window and jumps to declaration if possible
 
@@ -65,8 +76,7 @@ class BaseLookUpJediCommand(JediEnvMixin):
         # If the file was selected from a drop down list
         if isinstance(filename, int):
             if filename == -1:  # cancelled
-                self.view = self.base_view
-                active_window.focus_view(self.view)
+                self._restore_base_view_region(active_window)
                 return
             filename, line_number, column_number = self.options_map[filename]
         active_window.open_file('%s:%s:%s' % (filename, line_number or 0,
@@ -88,7 +98,7 @@ class BaseLookUpJediCommand(JediEnvMixin):
         """
         options = list(options)
         active_window = self.view.window()
-        self.base_view = self.view
+        self._store_base_view_region()
 
         # Map the filenames to line and column numbers
         self.options_map = dict((i, (o.module_path, o.line, o.column))
